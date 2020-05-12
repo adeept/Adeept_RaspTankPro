@@ -334,12 +334,16 @@ def configPWM(command_input, response):
 
 def update_code():
     # Update local to be consistent with remote
-    with open('../config.json', 'w+') as f:
-        config = json.load(f)
+    projectPath = thisPath[:-7]
+    with open(f'{projectPath}/config.json', 'r') as f1:
+        config = json.load(f1)
         if not config['production']:
-            os.system('cd' + thisPath + '&& sudo git pull')
+            print('Update code')
+            # Force overwriting local code
+            os.system(f'cd {projectPath} && sudo git fetch --all && git reset --hard origin/master && git pull')
             config['production'] = True
-        json.dump(config, f)
+            with open(f'{projectPath}/config.json', 'w') as f2:
+                json.dump(config, f2)
 
 
 def wifi_check():
