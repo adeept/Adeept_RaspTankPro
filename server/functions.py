@@ -1,8 +1,3 @@
-#!/usr/bin/env python3
-# File name   : servo.py
-# Description : Control Functions
-# Author	  : William
-# Date		: 2020/03/17
 import time
 import RPi.GPIO as GPIO
 import threading
@@ -64,6 +59,17 @@ pwm2_pos  = pwm2_init
 line_pin_right = 19
 line_pin_middle = 16
 line_pin_left = 20
+
+Dir_forward   = 0
+Dir_backward  = 1
+
+left_forward  = 1
+left_backward = 0
+
+right_forward = 0
+right_backward= 1
+
+mark = 0
 
 def pwmGenOut(angleInput):
 	return int(round(23/9*angleInput))
@@ -163,17 +169,71 @@ class Functions(threading.Thread):
 		status_right = GPIO.input(line_pin_right)
 		status_middle = GPIO.input(line_pin_middle)
 		status_left = GPIO.input(line_pin_left)
-		#print('R%d   M%d   L%d'%(status_right,status_middle,status_left))
-		if status_middle == 1:
-			move.move(100, 'forward', 'no', 1)
-		elif status_left == 1:
-			move.move(100, 'no', 'right', 1)
-		elif status_right == 1:
-			move.move(100, 'no', 'left', 1)
+		global mark
+		if status_left ==0 and status_middle == 1 and status_right ==0:# (0 1 0)
+			move.motor_left(1, left_forward, 80)	# move.motor_left(status, left_forward, speed)   status:1 means action, 0 means end. left_forward:Left motor forward. speed: motor speed.
+			move.motor_right(1, right_forward, 80)# right_forward: Right motor forward
+			mark = 1
+
+		elif status_left ==1 and status_middle == 1 and status_right ==0:# (1 1 0 )
+			if mark !=2:
+				move.motor_left(1, left_backward, 80)	# left_backward: Left motor backward
+				move.motor_right(1, right_backward, 80)	# right_backward: Right motor backward
+				time.sleep(0.03)
+			move.motor_left(1, left_forward, 70)
+			move.motor_right(1, right_forward, 100)
+			mark = 2
+
+		elif status_left ==1 and status_middle == 0 and status_right ==0:#(1 0 0)
+			if mark !=3:
+				move.motor_left(1, left_backward, 80)
+				move.motor_right(1, right_backward, 80)
+				time.sleep(0.03)
+			move.motor_left(1, left_forward, 0)
+			move.motor_right(1, right_forward, 100)
+			time.sleep(0.02)
+			mark = 3
+
+		elif  status_left ==0 and status_middle == 1 and status_right ==1:# (0 1 1)
+			if mark !=4:
+				move.motor_left(1, left_backward, 80)
+				move.motor_right(1, right_backward, 80)
+				time.sleep(0.03)
+			move.motor_left(1, left_forward, 100)
+			move.motor_right(1, right_forward, 70)
+			mark = 4
+
+		elif  status_left ==0 and status_middle == 0 and status_right ==1:# (0 0 1)
+			if mark !=5:
+				move.motor_left(1, left_backward, 80)
+				move.motor_right(1, right_backward, 80)
+				time.sleep(0.03)
+			move.motor_left(1, left_forward, 100)
+			move.motor_right(1, right_forward, 0)
+			time.sleep(0.02)
+			mark = 5
+
 		else:
-			move.move(100, 'backward', 'no', 1)
+			if mark ==0 :
+				move.motor_left(1, left_forward, 80)
+				move.motor_right(1, right_forward, 80)
+			elif mark == 1:
+				
+				move.motor_left(1, left_forward, 80)
+				move.motor_right(1, right_forward, 80)
+			elif mark == 2 or mark == 3:				# (1 0 0)
+				
+				move.motor_left(1, left_forward, 0)
+				move.motor_right(1, right_forward, 100)
+				time.sleep(0.03)
+			elif mark == 4 or mark == 5:
+				
+				move.motor_left(1, left_forward, 100)
+				move.motor_right(1, right_forward, 0)
+				time.sleep(0.03)
 
 		time.sleep(0.1)
+
 
 
 	def automaticProcessing(self):
@@ -220,15 +280,18 @@ class Functions(threading.Thread):
 
 
 if __name__ == '__main__':
-	pass
-	fuc=Functions()
-	# fuc.radarScan()
-	fuc.start()
-	# fuc.automatic()
-	fuc.steady(300)
-	while 1:
-		time.sleep(10)
-	# time.sleep(30)
-	# fuc.pause()
-	# time.sleep(1)
-	# move.move(80, 'no', 'no', 0.5)
+	try:
+		fuc=Functions()
+		# fuc.radarScan()
+		# fuc.start()
+		# fuc.automatic()
+		fuc.steady(300)
+		while 1:
+			# time.sleep(10)
+		# time.sleep(30)
+			fuc.trackLineProcessing()
+		# time.sleep(1)
+		# move.move(80, 'no', 'no', 0.5)
+	
+	except:
+		move.move(0, 'no', 'no', 0)
