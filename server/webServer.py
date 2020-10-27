@@ -62,11 +62,16 @@ G_sc.start()
 # modeSelect = 'none'
 modeSelect = 'PT'
 
-init_pwm0 = scGear.initPos[0]
-init_pwm1 = scGear.initPos[1]
-init_pwm2 = scGear.initPos[2]
-init_pwm3 = scGear.initPos[3]
-init_pwm4 = scGear.initPos[4]
+init_pwm = []
+for i in range(16):
+    init_pwm.append(scGear.initPos[i])
+
+# init_pwm0 = scGear.initPos[0]
+# init_pwm1 = scGear.initPos[1]
+# init_pwm2 = scGear.initPos[2]
+# init_pwm3 = scGear.initPos[3]
+# init_pwm4 = scGear.initPos[4]
+
 
 fuc = functions.Functions()
 fuc.start()
@@ -277,67 +282,33 @@ def robotCtrl(command_input, response):
         G_sc.moveServoInit([3])
 
 
+def setPWM(data):
+    global init_pwm
+    action = data.split()[0]
+    PWMnum = int(data.split()[1])
+
+    if "SiLeft"  == action:
+        print("xxxxxxxxxxxxxxxxxxxxxxxxxxxx")
+        init_pwm[PWMnum]+= 1
+        scGear.setPWM(PWMnum, init_pwm[PWMnum])
+
+    elif "SiRight" == action:
+        init_pwm[PWMnum]-= 1
+        scGear.setPWM(PWMnum, init_pwm[PWMnum])
+    
+    elif "PWMMS" == action:
+        P_sc.initConfig(PWMnum, init_pwm[PWMnum], 1)
+        replace_num("init_pwm" + str(PWMnum) + " = ",init_pwm[PWMnum] )
+
+
 def configPWM(command_input, response):
-    global init_pwm0, init_pwm1, init_pwm2, init_pwm3, init_pwm4
-    if 'SiLeft' == command_input:
-        init_pwn_num = int(command_input[7:])
-        if init_pwn_num ==0:
-            init_pwm0 -= 1
-            scGear.setPWM(0,init_pwm0)
-        elif init_pwn_num == 1:
-            init_pwm1 -= 1
-            scGear.setPWM(1,init_pwm1)
-        elif init_pwn_num == 2:
-            init_pwm2 -= 1
-            scGear.setPWM(2,init_pwm2)
-        elif init_pwn_num == 3:
-            init_pwm3 -= 1
-            scGear.setPWM(3,init_pwm3)
-        elif init_pwn_num == 4:
-            init_pwm4 -= 1
-            scGear.setPWM(4,init_pwm4)
-
-    elif 'SiRight' in command_input:
-        init_pwn_num = int(command_input[8:])
-        if init_pwn_num ==0:
-            init_pwm0 += 1
-            scGear.setPWM(0,init_pwm0)
-        elif init_pwn_num == 1:
-            init_pwm1 += 1
-            scGear.setPWM(1,init_pwm1)
-        elif init_pwn_num == 2:
-            init_pwm2 += 1
-            scGear.setPWM(2,init_pwm2)
-        elif init_pwn_num == 3:
-            init_pwm3 += 1
-            scGear.setPWM(3,init_pwm3)
-        elif init_pwn_num == 4:
-            init_pwm4 += 1
-            scGear.setPWM(4,init_pwm4)
-
-    elif 'PWMMS 0' == command_input:
-        scGear.initConfig(0,init_pwm0,1)
-        replace_num('init_pwm0 = ', init_pwm0)
-
-    elif 'PWMMS 1' == command_input:
-        P_sc.initConfig(1,init_pwm1,1)
-        replace_num('init_pwm1 = ', init_pwm1)
-
-    elif 'PWMMS 2' == command_input:
-        T_sc.initConfig(2,init_pwm1,1)
-        replace_num('init_pwm2 = ', T_sc.lastPos[2])
-
-    elif 'PWMMS 3' == command_input:
-        H_sc.initConfig(3,init_pwm3,1)
-        replace_num('init_pwm3 = ', init_pwm3)
-
-    elif 'PWMMS 4' == command_input:
-        G_sc.initConfig(4,init_pwm4,1)
-        replace_num('init_pwm4 = ', init_pwm4)
+    global init_pwm
+    if 'SiLeft' in command_input or 'SiRight' in command_input or 'PWMMS' in command_input:
+        setPWM(command_input)
 
     elif 'PWMINIT' == command_input:
-        print(init_pwm1)
         servoPosInit()
+
     elif 'PWMD' == command_input:
         init_pwm0,init_pwm1,init_pwm2,init_pwm3,init_pwm4=300,300,300,300,300
         scGear.initConfig(0,init_pwm0,1)
