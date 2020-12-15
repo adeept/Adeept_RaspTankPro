@@ -238,12 +238,6 @@ def robotCtrl(command_input, response):
     elif 'LRstop' in command_input:
         P_sc.stopWiggle()
 
-    elif 'up' == command_input:
-        C_sc.singleServo(4, 1, 3)
-
-    elif 'down' == command_input:
-        C_sc.singleServo(4, -1, 3)
-
     elif 'armup' == command_input:
         T_sc.singleServo(1, 1, 3)
 
@@ -253,16 +247,13 @@ def robotCtrl(command_input, response):
     elif 'armstop' in command_input:
     	T_sc.stopWiggle()
 
-    elif 'UDstop' in command_input:
-        C_sc.stopWiggle()
-
     elif 'handup' == command_input:
         H_sc.singleServo(2, 1, 3)
 
     elif 'handdown' == command_input:
         H_sc.singleServo(2, -1, 3)
 
-    elif 'HAstop' in command_input:
+    elif 'handstop' in command_input:
         H_sc.stopWiggle()
 
     elif 'grab' == command_input:
@@ -270,6 +261,16 @@ def robotCtrl(command_input, response):
 
     elif 'loose' == command_input:
         G_sc.singleServo(3, 1, 3)
+
+    elif 'cameraup' == command_input:
+        C_sc.singleServo(4, 1, 3)
+
+    elif 'cameradown' == command_input:
+        C_sc.singleServo(4, -1, 3)
+
+    elif 'camerastop' in command_input:
+        C_sc.stopWiggle()
+
 
     elif 'stop' == command_input:
         G_sc.stopWiggle()
