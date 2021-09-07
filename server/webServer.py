@@ -536,8 +536,8 @@ if __name__ == '__main__':
         except:
             pass
     try:
-        RL.pause()
-        RL.setColor(0,255,64)
+        # RL.pause()
+        # RL.setColor(0,255,64)
         asyncio.get_event_loop().run_forever()
     except Exception as e:
         print(e)
