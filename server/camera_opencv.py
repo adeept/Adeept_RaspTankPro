@@ -12,6 +12,10 @@ import time
 import threading
 import imutils
 import robotLight
+import picamera2
+import libcamera
+from picamera2 import Picamera2, Preview
+
 
 light = robotLight.RobotLight()
 
@@ -20,6 +24,7 @@ pid.SetKp(0.5)
 pid.SetKd(0)
 pid.SetKi(0)
 
+
 CVRun = 1
 linePos_1 = 440
 linePos_2 = 380
@@ -27,7 +32,10 @@ lineColorSet = 255
 frameRender = 1
 findLineError = 20
 
+hflip = 0 # Video flip horizontally: 0 or 1
+vflip = 0 # Video vertical flip: 0/1 
 ImgIsNone = 0
+
 
 colorUpper = np.array([44, 255, 255])
 colorLower = np.array([24, 100, 100])
@@ -351,15 +359,11 @@ class CVThread(threading.Thread):
 class Camera(BaseCamera):
     video_source = -1
     modeSelect = 'none'
-    # modeSelect = 'findlineCV'
-    # modeSelect = 'findColor'
-    # modeSelect = 'watchDog'
 
-
-    def __init__(self):
-        if os.environ.get('OPENCV_CAMERA_SOURCE'):
-            Camera.set_video_source(int(os.environ['OPENCV_CAMERA_SOURCE']))
-        super(Camera, self).__init__()
+    # def __init__(self):
+    #     if os.environ.get('OPENCV_CAMERA_SOURCE'):
+    #         Camera.set_video_source(int(os.environ['OPENCV_CAMERA_SOURCE']))
+    #     super(Camera, self).__init__()
 
 
     def colorFindSet(self, invarH, invarS, invarV):
@@ -419,17 +423,40 @@ class Camera(BaseCamera):
 
     @staticmethod
     def frames():
-        global ImgIsNone
-        camera = cv2.VideoCapture(Camera.video_source)
-        if not camera.isOpened():
+        global ImgIsNone,hflip,vflip
+        picam2 = Picamera2() 
+        
+        preview_config = picam2.preview_configuration
+        # preview_config.size = (800, 600)
+        preview_config.size = (640, 480)
+        preview_config.format = 'RGB888'  # 'XRGB8888', 'XBGR8888', 'RGB888', 'BGR888', 'YUV420'
+        # hflip = 0
+        # vflip = 0
+        preview_config.transform = libcamera.Transform(hflip=hflip, vflip=vflip)
+        preview_config.colour_space = libcamera.ColorSpace.Sycc()
+        preview_config.buffer_count = 4
+        preview_config.queue = True
+        # preview_config.framerate = 20
+
+        # if not camera.isOpened():
+        if not picam2.is_open:
             raise RuntimeError('Could not start camera.')
+
+        try:
+            picam2.start()
+        except Exception as e:
+            print(f"\033[38;5;1mError:\033[0m\n{e}")
+            print("\nPlease check whether the camera is connected well,  \
+                  and disable the \"legacy camera driver\" on raspi-config")
 
         cvt = CVThread()
         cvt.start()
 
         while True:
+            start_time = time.time()
             # read current frame
-            _, img = camera.read()
+            img = picam2.capture_array()
+
             if img is None:
                 if ImgIsNone == 0:
                     print("--------------------")
@@ -442,23 +469,28 @@ class Camera(BaseCamera):
                     print("--------Ctrl+C quit-----------")
                     ImgIsNone = 1
                 continue
-
+            
+            # img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+            # print("img1:%d", type(img))
             if Camera.modeSelect == 'none':
-                switch.switch(1,0)
+                # switch.switch(1,0)
                 cvt.pause()
             else:
                 if cvt.CVThreading:
                     pass
                 else:
+                    pass
                     cvt.mode(Camera.modeSelect, img)
                     cvt.resume()
                 try:
+                    pass
                     img = cvt.elementDraw(img)
                 except:
                     pass
             
 
 
+            # img = cv2.imdecode(img)
             # encode as a jpeg image and return it
             if cv2.imencode('.jpg', img)[0]:
                 yield cv2.imencode('.jpg', img)[1].tobytes()

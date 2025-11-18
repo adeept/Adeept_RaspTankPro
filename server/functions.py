@@ -13,7 +13,7 @@ move.setup()
 
 kalman_filter_X =  Kalman_filter.Kalman_filter(0.01,0.1)
 
-pwm = Adafruit_PCA9685.PCA9685()
+pwm = Adafruit_PCA9685.PCA9685(0x40, busnum=1)
 pwm.set_pwm_freq(50)
 
 MPU_connection = 1
